@@ -12,7 +12,7 @@ jobs:
         AWS_REGION: "us-east-1"
         ECR_URL: "520256696060.dkr.ecr.us-east-1.amazonaws.com"
         IMAGE_NAME: "pythonapp"
-        VERSION: "1"
+        VERSION: "2"
 
     steps:
         - name: Checkout repository
@@ -33,4 +33,24 @@ jobs:
             context: .
             push: true
             tags: ${{ env.ECR_URL }}/${{ env.IMAGE_NAME }}:v${{ env.VERSION }}
-            
+
+        - name: Download task definition
+          run: |
+            aws ecs describe-task-definition --task-definition 
+            runpython --query taskDefinition > task-definition.json
+
+        - name: Fill in the new image ID in the Amazon ECS task definition
+          id: task-def
+          uses: aws-actions/amazon-ecs-render-task-definition@v1
+          with:
+            task-definition: task-definition.json
+            container-name: pythonapp
+            image: ${{ env.ECR_URL }}/${{ env.IMAGE_NAME }}:v${{ env.VERSION }}
+
+        - name: Deploy Amazon ECS task definition
+          uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+          with:
+            task-definition: ${{ steps.task-def.outputs.task-definition }}
+            service: myservice
+            cluster: testecs
+            wait-for-service-stability: true            
