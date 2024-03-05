@@ -22,14 +22,14 @@ jobs:
           with:
             aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
             aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            aws-region: $AWS_REGION
+            aws-region: ${{ env.AWS_REGION }}
         - name: Login to Aws ECR
-          run: aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_URL
+          run: aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.ECR_URL }}
 
         - name: Build and Push Docker image
           uses: docker/build-push-action@v5
           with:
             context: .
             push: true
-            tags: $ECR_URL/$IMAGE_NAME:latest
+            tags: ${{ env.ECR_URL }}/${{ env.IMAGE_NAME }}:latest
             
